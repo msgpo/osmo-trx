@@ -32,7 +32,10 @@
 #include <osmocom/vty/misc.h>
 
 #include "trx_vty.h"
-#include "../config.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 static struct trx_ctx* g_trx_ctx;
 
