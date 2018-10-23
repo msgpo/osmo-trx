@@ -13,6 +13,10 @@ if DEVICE_LMS
 SYSTEMD_SERVICES += osmo-trx-lms.service
 endif
 
+if DEVICE_XTRX
+SYSTEMD_SERVICES += osmo-trx-xtrx.service
+endif
+
 EXTRA_DIST = $(SYSTEMD_SERVICES)
 systemdsystemunit_DATA = $(SYSTEMD_SERVICES)
 endif # HAVE_SYSTEMD
