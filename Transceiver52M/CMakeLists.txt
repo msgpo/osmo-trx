@@ -82,8 +82,8 @@ set(LIBOSMOCTRL_LIBS osmoctrl)
 set(LIBOSMOVTY_LIBS osmovty)
 
 set(DEVICE        device/xtrx/XTRXDevice.cpp)
-set(DEVICE_LIBS   ${XTRX_LIBRARIES})
-set(DEVICE_INC    ${XTRX_INCLUDES})
+set(DEVICE_LIBS   ${LIBXTRX_LIBRARIES})
+set(DEVICE_INC    ${LIBXTRX_INCLUDE_DIRS})
 
 include_directories(${DEVICE_INC})
 add_executable(osmo-trx-xtrx osmo-trx.cpp ${DEVICE})

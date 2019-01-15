@@ -28,7 +28,7 @@ CONFIGURE_FILE(
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(FFTW)
-find_package(XTRX)
+find_package(LibXTRX)
 
 find_library(sqlite3 sqlite3)
 #add_subdirectory(sqlite3)
