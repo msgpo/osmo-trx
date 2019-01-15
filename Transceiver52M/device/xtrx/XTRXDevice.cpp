@@ -41,10 +41,16 @@ XTRXDevice::XTRXDevice(size_t tx_sps, size_t rx_sps, InterfaceType iface, size_t
 					   const std::vector<std::string>& rx_paths) :
 	RadioDevice(tx_sps, rx_sps, iface, chans, lo_offset, tx_paths, rx_paths)
 {
-	LOG(INFO) << "creating XTRX device...";
+	LOG(INFO) << "creating XTRX device:"
+			  << " RXSPS: " << rx_sps
+			  << " TXSPS: " << tx_sps
+			  << " chans: " << chans
+			  << " lo_off: " << lo_offset
+			  << " rx_path(0): " << (rx_paths.size() ? rx_paths[0] : "<>")
+			  << " tx_path(0): " << (tx_paths.size() ? tx_paths[0] : "<>");
 
-	this->txsps = txsps;
-	this->rxsps = rxsps;
+	txsps = tx_sps;
+	rxsps = rx_sps;
 
 	rxGain = 0;
 
@@ -85,6 +91,11 @@ int XTRXDevice::open(const std::string &args, int ref, bool swap_channels)
 	int len = (lend) ? (lend - args.c_str()) : sizeof(xtrx_name) - 1;
 	strncpy(xtrx_name, args.c_str(), len);
 	xtrx_name[len] = 0;
+
+	if ((txsps % 2) || (rxsps % 2)) {
+		LOG(ALERT) << "XTRX TxSPS/RxSPS must be even!";
+		return -1;
+	}
 
 	if (lb_param) {
 		LOG(ALERT) << "XTRX LOOPBACK mode is set!";
@@ -179,8 +190,8 @@ bool XTRXDevice::start()
 	xtrx_stop(device, XTRX_TX);
 	xtrx_stop(device, XTRX_RX);
 
-	xtrx_set_antenna(device, XTRX_TX_L);
-	xtrx_set_antenna(device, XTRX_RX_L);
+	xtrx_set_antenna(device, XTRX_TX_AUTO);
+	xtrx_set_antenna(device, XTRX_RX_AUTO);
 
 	xtrx_run_params_t params;
 	params.dir = XTRX_TRX;
@@ -266,7 +277,7 @@ double XTRXDevice::setTxGain(double dB, size_t chan)
 	double actual = 0;
 	LOG(NOTICE) << "Setting TX gain to " << dB << " dB.";
 
-	int res = xtrx_set_gain(device, XTRX_CH_AB, XTRX_TX_PAD_GAIN, -10, &actual);
+	int res = xtrx_set_gain(device, XTRX_CH_AB, XTRX_TX_PAD_GAIN, dB - 30, &actual);
 	if (res) {
 		LOG(ERR) << "Error setting TX gain res: " << res;
 	}
@@ -284,7 +295,7 @@ double XTRXDevice::setRxGain(double dB, size_t chan)
 	double actual = 0;
 	LOG(NOTICE) << "Setting RX gain to " << dB << " dB.";
 
-	int res = xtrx_set_gain(device, XTRX_CH_AB, XTRX_RX_LNA_GAIN, 25, &actual);
+	int res = xtrx_set_gain(device, XTRX_CH_AB, XTRX_RX_LNA_GAIN, dB, &actual);
 	if (res) {
 		LOG(ERR) << "Error setting RX gain res: " << res;
 	}
@@ -299,10 +310,6 @@ int XTRXDevice::readSamples(std::vector<short *> &bufs, int len, bool *overrun,
 	if (!started)
 		return -1;
 
-	if (RSSI) {
-		*RSSI = 10; // TODO
-	}
-
 	struct xtrx_recv_ex_info ri;
 	ri.samples = len;
 	ri.buffer_count = bufs.size();
@@ -316,6 +323,7 @@ int XTRXDevice::readSamples(std::vector<short *> &bufs, int len, bool *overrun,
 	}
 	timeRx += len;
 
+	// TODO get rid of it!
 	int i;
 	for (i = 0; i < len * 2; i++)
 		bufs[0][i] <<= 4;
@@ -356,6 +364,7 @@ int XTRXDevice::writeSamples(std::vector<short *> &bufs, int len,
 
 bool XTRXDevice::setRxAntenna(const std::string & ant, size_t chan)
 {
+	LOG(ALERT) << "CH" << chan << ": RX ANTENNA: " << ant.c_str();
 	return true;
 }
 
@@ -366,6 +375,7 @@ std::string XTRXDevice::getRxAntenna(size_t chan)
 
 bool XTRXDevice::setTxAntenna(const std::string & ant, size_t chan)
 {
+	LOG(ALERT) << "CH" << chan << ": TX ANTENNA: " << ant.c_str();
 	return true;
 }
 
